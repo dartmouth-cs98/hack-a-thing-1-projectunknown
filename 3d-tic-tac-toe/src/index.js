@@ -25,63 +25,40 @@ class Board extends React.Component {
 		);
   }
 
+  renderRow(sliceNumber,rowNumber,size) {
+    // line below obtained from https://stackoverflow.com/questions/3746725/how-to-create-an-array-containing-1-n
+    let array = Array.from(Array(size).keys())
+    return <div className="board-row">
+        {
+            array.map ( (n) => {
+                return this.renderSquare(sliceNumber*size*size + rowNumber*size + n)
+            })
+        }
+    </div>;
+  }
+  
+  renderBoardSlice(sliceNumber,size) {
+    // line below obtained from https://stackoverflow.com/questions/3746725/how-to-create-an-array-containing-1-n
+    let array = Array.from(Array(size).keys())
+    return <div className="level">
+        {
+            array.map ( (n) => {
+                return this.renderRow(sliceNumber,n,size)
+            })
+        }
+    </div>;
+  }
+
   render() {
-    const i = 0;
-    const j = 9;
-    const z = 18
+    let s=this.props.gameSize
+    let array = Array.from(Array(s).keys())
     return (
       <div>
-        <div className="level">
-          <div className="board-row">
-            {this.renderSquare(0)}
-            {this.renderSquare(1)}
-            {this.renderSquare(2)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(3)}
-            {this.renderSquare(4)}
-            {this.renderSquare(5)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(6)}
-            {this.renderSquare(7)}
-            {this.renderSquare(8)}
-          </div>
-        </div>
-        <div className="level">
-          <div className="board-row">
-            {this.renderSquare(j+0)}
-            {this.renderSquare(j+1)}
-            {this.renderSquare(j+2)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(j+3)}
-            {this.renderSquare(j+4)}
-            {this.renderSquare(j+5)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(j+6)}
-            {this.renderSquare(j+7)}
-            {this.renderSquare(j+8)}
-          </div>
-        </div>
-        <div className="level">
-          <div className="board-row">
-            {this.renderSquare(z+0)}
-            {this.renderSquare(z+1)}
-            {this.renderSquare(z+2)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(z+3)}
-            {this.renderSquare(z+4)}
-            {this.renderSquare(z+5)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(z+6)}
-            {this.renderSquare(z+7)}
-            {this.renderSquare(z+8)}
-          </div>
-        </div>
+      {
+          array.map ( (n) => {
+              return this.renderBoardSlice(n,s)
+          })
+      }
       </div>
     );
   }
@@ -96,6 +73,7 @@ class Game extends React.Component {
       }],
       stepNumber: 0,
       xIsNext: true,
+      gameSize: 3,
     };
   }
 
@@ -103,7 +81,7 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+    if (calculateWinner(squares,this.state.gameSize) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? 'X' : 'O'
@@ -123,10 +101,21 @@ class Game extends React.Component {
     });
   }
 
+  changeGameSize(size) {
+    this.setState({
+      history: [{
+        squares: Array(size*size).fill(null),
+      }],
+      stepNumber: 0,
+      xIsNext: true,
+      gameSize: size,
+    });
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
+    const winner = calculateWinner(current.squares,this.state.gameSize);
 
     const moves = history.map((step, move) => {
       const desc = move ?
@@ -151,12 +140,17 @@ class Game extends React.Component {
         <div className="game-board">
           <Board
             squares={current.squares}
+            gameSize={this.state.gameSize}
             onClick={(i) => this.handleClick(i)}
           />
         </div>
         <div className="game-info">
           <div>{status}</div>
           <ol>{moves}</ol>
+        </div>
+        <div className="game-parameters">
+          <button onClick={() => this.changeGameSize(3)}>3 x 3 x 3</button>
+          <button onClick={() => this.changeGameSize(4)}>4 x 4 x 4</button>
         </div>
       </div>
     );
@@ -170,41 +164,87 @@ ReactDOM.render(
   document.getElementById('root')
 );
 
-function calculateWinner(squares) {
-  let j = 9;
-  let z = 18;
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
-    }
-    if (squares[a+j] && squares[a+j] === squares[b+j] && squares[a+j] === squares[c+j]) {
-      return squares[a+j];
-    }
-    if (squares[a+z] && squares[a+z] === squares[b+z] && squares[a+z] === squares[c+z]) {
-      return squares[a+z];
-    }
-    if (squares[a] && squares[a] === squares[b+j] && squares[a] === squares[c+z]) {
-      return squares[a];
-    }
-  }
-
-  for (let a = 0; a < j; a++) {
-    if (squares[a] && squares[a] === squares[a+j] && squares[a] === squares[a+z]) {
-      return squares[a];
-    }
-  }
+function calculateWinner(squares,gameSize) {
+  if (gameSize === 3) {
+    let j = gameSize*gameSize;
+    let z = gameSize*gameSize*2;
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
   
-  return null;
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
+      }
+      if (squares[a+j] && squares[a+j] === squares[b+j] && squares[a+j] === squares[c+j]) {
+        return squares[a+j];
+      }
+      if (squares[a+z] && squares[a+z] === squares[b+z] && squares[a+z] === squares[c+z]) {
+        return squares[a+z];
+      }
+      if (squares[a] && squares[a] === squares[b+j] && squares[a] === squares[c+z]) {
+        return squares[a];
+      }
+    }
+  
+    for (let a = 0; a < j; a++) {
+      if (squares[a] && squares[a] === squares[a+j] && squares[a] === squares[a+z]) {
+        return squares[a];
+      }
+    }
+    
+    return null;
+  }
+  else {
+    let j = gameSize*gameSize;
+    let z = gameSize*gameSize*2;
+    let y = gameSize*gameSize*3;
+    const lines = [
+      [0, 1, 2, 4],
+      [4, 5, 6, 7],
+      [8, 9, 10, 11],
+      [12, 13, 14, 15],
+      [0, 4, 8, 12],
+      [1, 5, 9, 13],
+      [2, 6, 10, 14],
+      [3, 7, 11, 15],
+      [0, 5, 10, 15],
+      [3, 6, 9, 12],
+    ];
+  
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c, d] = lines[i];
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c] && squares[a] === squares[d]) {
+        return squares[a];
+      }
+      if (squares[a+j] && squares[a+j] === squares[b+j] && squares[a+j] === squares[c+j] && squares[a+j] === squares[d+j]) {
+        return squares[a+j];
+      }
+      if (squares[a+z] && squares[a+z] === squares[b+z] && squares[a+z] === squares[c+z] && squares[a+z] === squares[d+z]) {
+        return squares[a+z];
+      }
+      if (squares[a+y] && squares[a+y] === squares[b+y] && squares[a+y] === squares[c+y] && squares[a+y] === squares[d+y]) {
+        return squares[a+z];
+      }
+      if (squares[a] && squares[a] === squares[b+j] && squares[a] === squares[c+z] && squares[a] === squares[d+y]) {
+        return squares[a];
+      }
+    }
+  
+    for (let a = 0; a < j; a++) {
+      if (squares[a] && squares[a] === squares[a+j] && squares[a] === squares[a+z] && squares[a] === squares[a+y]) {
+        return squares[a];
+      }
+    }
+    
+    return null;
+  }
 }

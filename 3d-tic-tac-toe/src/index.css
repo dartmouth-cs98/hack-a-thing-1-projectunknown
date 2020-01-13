@@ -56,3 +56,8 @@ ol, ul {
   margin-left: 20px;
 }
 
+.game-parameters {
+  display: flex;
+  margin-left: 20px;
+  flex-direction: column;
+}
